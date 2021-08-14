@@ -2,6 +2,7 @@
     "telegram_config" : {
         "token": "",
         "password": "",
-        "tick_frequency" : 60
+        "tick_frequency" : 60,
+        "runs_before_giving_up": 15
     }
 }

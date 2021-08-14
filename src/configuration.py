@@ -24,4 +24,5 @@ class Configuration:
         
         self.token = self.from_config('telegram_config').get('token')
         self.password = self.from_config('telegram_config').get('password')
+        self.runs_before_giving_up = self.from_config('telegram_config').get('runs_before_giving_up')
         self.tick_frequency = self.from_config('telegram_config').get('tick_frequency')

@@ -20,7 +20,6 @@ def find_restaurant(query):
     found_restauratns = []
 
     for result in results[:10]:
-        slug = result['value']['slug']
-        found_restauratns.append(slug)
+        found_restauratns.append(result['value']['name'][0]['value'])
 
     return found_restauratns
