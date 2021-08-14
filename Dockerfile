@@ -4,4 +4,4 @@ COPY config.json /app
 COPY requirements.txt /app
 WORKDIR /app
 RUN pip install -r requirements.txt
-CMD python ./websitewatcher.py
+CMD python ./wolt_watcher.py
