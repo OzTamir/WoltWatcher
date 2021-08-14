@@ -1,0 +1,28 @@
+{
+    "watchers": [
+        {
+            "Name" : "A_LABEL_FOR_THE_URL",
+            "URL": "http://URLTOMONITOR.com/",
+            "Whitelist" : ["REGEX_TO_MATCH_AGAINST"],
+            "Blacklist" : ["REGEX_TO_MATCH_AGAINST"],
+            "AlertAnyChange" : true
+        }
+    ],
+    "mode": {
+        "telegram": true,
+        "twilio": false
+    },
+    "telegram_config" : {
+        "token": "",
+        "password": "",
+        "tick_frequency" : 60
+    },
+    "twilio_config" : {
+        "sid": "",
+        "auth": "",
+        "receiver_number": "+XXXXXXXXXXXX",
+        "caller_number" : "+XXXXXXXXXXXX",
+        "tick_frequency" : 60,
+        "debug_mode" : false
+    }
+}
