@@ -16,7 +16,7 @@ class RestaurantWatchlist:
         self.__watchers[watch.chat_id] = watch
 
     def get_watchers(self):
-        return self.__watchers.values()
+        return [watch for watch in self.__watchers.values()]
 
     def remove(self, chat_id: str):
         self.__watchers.pop(chat_id)

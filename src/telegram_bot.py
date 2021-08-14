@@ -22,8 +22,7 @@ class Bot:
             context (telegram.ext.callbackcontext.CallbackContext): Object used for interaction with Telegram
         """
         logging.debug('Running watchlist check...')
-        watchers = self.watchlist.get_watchers()
-        for watcher in watchers:
+        for watcher in self.watchlist.get_watchers():
             online, name, url = get_restaurant_status(watcher.slug)
             watcher.times_checked += 1
             logging.debug(f'Query for {watcher.chat_id}: {name} is {"Online" if online else "Offline"}')
@@ -41,6 +40,7 @@ class Bot:
                 message += "If you want, you can run me again."
                 context.bot.send_message(chat_id=watcher.chat_id, text=message)
                 self.watchlist.remove(watcher.chat_id)
+        logging.info('Done with watchlist')
 
     def say_hello(self, update, context):
         """ Introduce yourself """

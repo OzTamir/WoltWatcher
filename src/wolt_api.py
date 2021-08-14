@@ -1,3 +1,4 @@
+import logging
 import requests
 
 SEARCH_API = 'https://restaurant-api.wolt.com/v1/search?sort=releveancy&q={slug}'
