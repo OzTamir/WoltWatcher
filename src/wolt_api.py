@@ -12,14 +12,23 @@ def get_restaurant_status(slug: str):
 
     return (result['online'], restaurant_name, result['public_url'])
 
-def find_restaurant(query):
-    response = requests.get(SEARCH_API.format(slug=query))
+def find_restaurant(slug, force_exact_match=False):
+    response = requests.get(INFO_API.format(slug=slug))
     response.raise_for_status()
 
     results = response.json()['results']
     found_restauratns = []
 
     for result in results[:10]:
-        found_restauratns.append(result['value']['name'][0]['value'])
+        if force_exact_match and result['slug'] != slug:
+            continue
+        found_restauratns.append(
+            {
+                'slug' : result['slug'],
+                'address' : result['address'],
+                'name' : result['name'][0]['value'],
+                'url' : result['public_url']
+            }
+        )
 
     return found_restauratns

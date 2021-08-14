@@ -2,11 +2,14 @@
 Define the Telegram bot version of WebsiteWatcher
 """
 
+import json
 import logging
 from configuration import Configuration
 from restaurant_watch import RestaurantWatch, RestaurantWatchlist
 
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CallbackQueryHandler, MessageHandler, Filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 from wolt_api import find_restaurant, get_restaurant_status
 
 class Bot:
@@ -38,31 +41,6 @@ class Bot:
                 message += "If you want, you can run me again."
                 context.bot.send_message(chat_id=watcher.chat_id, text=message)
                 self.watchlist.remove(watcher.chat_id)
-        
-
-
-    def start_watching(self, update, context):
-        """ Start the JobQueue that ticks the watcher """
-        logging.debug(f'Got /watch command from chat id {update.message.chat_id}')
-
-        if len(context.args) != 1 or not context.args[0].startswith('https://wolt.com/'):
-            context.bot.send_message(chat_id=update.message.chat_id, text='Usage: /watch {wolt_url}')
-            return
-
-        slug = context.args[0].split('/')[-1]
-        restaurant_names = find_restaurant(slug)
-        if len(restaurant_names) != 1:
-            context.bot.send_message(chat_id=update.message.chat_id, text='Could not find restaurant :(')
-            return
-
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=f"Let's go! I will now check {restaurant_names[0]} every {self.tick_frequency} seconds."
-        )
-
-        logging.debug(f'Added {slug} to watchlist')
-        watch = RestaurantWatch(update.message.chat_id, slug)
-        self.watchlist.add(watch)
 
     def say_hello(self, update, context):
         """ Introduce yourself """
@@ -70,10 +48,53 @@ class Bot:
 
         context.bot.send_message(
             chat_id=update.message.chat_id,
-            text="Hey! To start, send /watch {wolt_restaurant_url}"
+            text="Hey! To start, send me a link to an offline wolt restaurant!"
         )
 
+    def handle_multiple_restaurants(self, update, results):
+        options = []
+
+        logging.info(results)
+
+        for restaurant in results:
+            logging.info(restaurant)
+            options.append(
+                InlineKeyboardButton(restaurant['address'], callback_data=restaurant['slug'])
+            )
+        
+        markup = InlineKeyboardMarkup([options])
+        update.message.reply_text('Choose Venue:', reply_markup=markup)
+    
+    def handle_choice(self, update, context):
+        query = update.callback_query
+        query.answer()
+
+        slug = query.data
+        restaurant_names = find_restaurant(slug, True)
+        if len(restaurant_names) == 0:
+            context.bot.send_message(
+                chat_id=message_chat_id,
+                text=f"No such restaurant found :("
+            )
+            return
+
+        if len(restaurant_names) != 1:
+            return self.handle_multiple_restaurants(update, restaurant_names)
+
+        message_chat_id = update.callback_query.message.chat.id
+
+        context.bot.send_message(
+            chat_id=message_chat_id,
+            text=f"Let's go! I will now check {restaurant_names[0]['name']} every {self.tick_frequency} seconds."
+        )
+
+        logging.debug(f'Added {slug} to watchlist')
+        watch = RestaurantWatch(message_chat_id, slug)
+        self.watchlist.add(watch)
+
+
     def free_text(self, update, context):
+        logging.info(f'Chat id: {update.message.chat_id}')
         text = update.message.text
         if not text.startswith('https://wolt.com/'):
             context.bot.send_message(chat_id=update.message.chat_id, text='Usage: {wolt_url}')
@@ -82,13 +103,20 @@ class Bot:
         slug = text.split('/')[-1]
         logging.info(f'Got slug: {slug}')
         restaurant_names = find_restaurant(slug)
-        if len(restaurant_names) != 1:
-            context.bot.send_message(chat_id=update.message.chat_id, text='Could not find restaurant :(')
+
+        if len(restaurant_names) == 0:
+            context.bot.send_message(
+                chat_id=message_chat_id,
+                text=f"No such restaurant found :("
+            )
             return
+
+        if len(restaurant_names) != 1:
+            return self.handle_multiple_restaurants(update, restaurant_names)
 
         context.bot.send_message(
             chat_id=update.message.chat_id,
-            text=f"Let's go! I will now check {restaurant_names[0]} every {self.tick_frequency} seconds."
+            text=f"Let's go! I will now check {restaurant_names[0]['name']} every {self.tick_frequency} seconds."
         )
 
         logging.debug(f'Added {slug} to watchlist')
@@ -116,8 +144,9 @@ class Bot:
 
         updater = Updater(config.token)
         #updater.dispatcher.add_handler(CommandHandler('watch', self.start_watching, pass_job_queue=True))
-        updater.dispatcher.add_handler(CommandHandler('start', self.say_hello, pass_job_queue=True))
+        #updater.dispatcher.add_handler(CommandHandler('start', self.say_hello, pass_job_queue=True))
         updater.dispatcher.add_handler(MessageHandler(Filters.text, self.free_text, pass_job_queue=True))
+        updater.dispatcher.add_handler(CallbackQueryHandler(self.handle_choice))
 
         updater.job_queue.run_repeating(self.run_watch, self.tick_frequency)
         self.updater = updater
