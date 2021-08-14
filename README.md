@@ -1,5 +1,7 @@
 # WoltWatcher
- A dockerized telegram bot to monitor Wolt restaurant and notify when they can take orders again.
+A dockerized telegram bot to monitor Wolt restaurant and notify when they can take orders again.
+
+Inspired by [slack_wolt_notifier](https://github.com/Fraysa/slack_wolt_notifier).
 
 ## How to use
 0. Get your Telegram token and add it in config.json
