@@ -7,6 +7,7 @@ class RestaurantWatch:
         self.chat_id = chat_id
         self.slug = slug
         self.times_checked = 0
+        self.is_muted = True
 
 class RestaurantWatchlist:
     def __init__(self):
@@ -17,6 +18,9 @@ class RestaurantWatchlist:
 
     def get_watchers(self):
         return [watch for watch in self.__watchers.values()]
+
+    def get_watcher(self, chat_id: str):
+        return self.__watchers.get(chat_id, None)
 
     def remove(self, chat_id: str):
         self.__watchers.pop(chat_id)
