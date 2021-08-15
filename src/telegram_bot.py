@@ -103,7 +103,7 @@ class Bot:
     def free_text(self, update, context):
         try:
             text = update.message.text
-            logging.warning(f'Got text: {text[:10]}')
+            logging.warning(f'Got text: {text[:100]}')
             if not text.startswith('https://wolt.com/'):
                 restaurant_names = find_restaurant(text, self.restaurant_filters, False)
             else:
