@@ -66,15 +66,17 @@ class Bot:
         watch = RestaurantWatch(chat_id, restaurant['slug'])
         self.watchlist.add(watch)
 
-    def handle_multiple_restaurants(self, update, results, field_name='name'):
+    def handle_multiple_restaurants(self, update, results):
         options = []
-        for restaurant in results:
+        options_caption = 'Choose Venue:\n'
+        for idx, restaurant in enumerate(results):
             options.append(
-                InlineKeyboardButton(restaurant[field_name], callback_data=restaurant['slug'])
+                InlineKeyboardButton(f"{idx + 1}", callback_data=restaurant['slug'])
             )
-        
+            options_caption += f"{idx + 1}. {restaurant['name']} ({restaurant['address']})\n"
+
         markup = InlineKeyboardMarkup([options])
-        update.message.reply_text('Choose Venue:', reply_markup=markup)
+        update.message.reply_text(options_caption, reply_markup=markup)
     
     def handle_find_restaurants_results(self, update, context, chat_id, find_results):
         if len(find_results) == 0:
@@ -85,7 +87,7 @@ class Bot:
             return
 
         if len(find_results) != 1:
-            return self.handle_multiple_restaurants(update, find_results, 'address')
+            return self.handle_multiple_restaurants(update, find_results)
 
         restaurant = find_results[0]
         self.handle_single_restaurant(context, chat_id, restaurant)
