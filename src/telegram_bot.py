@@ -52,15 +52,11 @@ class Bot:
             text="Hey! To start, send me a link to an offline wolt restaurant!"
         )
 
-    def handle_multiple_restaurants(self, update, results):
+    def handle_multiple_restaurants(self, update, results, field_name='name'):
         options = []
-
-        logging.info(results)
-
         for restaurant in results:
-            logging.info(restaurant)
             options.append(
-                InlineKeyboardButton(restaurant['address'], callback_data=restaurant['slug'])
+                InlineKeyboardButton(restaurant[field_name], callback_data=restaurant['slug'])
             )
         
         markup = InlineKeyboardMarkup([options])
@@ -70,8 +66,10 @@ class Bot:
         query = update.callback_query
         query.answer()
 
+        message_chat_id = update.callback_query.message.chat.id
+
         slug = query.data
-        restaurant_names = find_restaurant(slug, True)
+        restaurant_names = find_restaurant(slug, self.restaurant_filters, True)
         if len(restaurant_names) == 0:
             context.bot.send_message(
                 chat_id=message_chat_id,
@@ -80,16 +78,19 @@ class Bot:
             return
 
         if len(restaurant_names) != 1:
-            return self.handle_multiple_restaurants(update, restaurant_names)
+            return self.handle_multiple_restaurants(update, restaurant_names, 'address')
 
-        message_chat_id = update.callback_query.message.chat.id
+        restaurant = restaurant_names[0]
+        if restaurant['online']:
+            message = f"✅ {restaurant['name']} is online! Get your food from {restaurant['url']}"
+            context.bot.send_message(chat_id=message_chat_id, text=message)
+            return
 
-        context.bot.send_message(
-            chat_id=message_chat_id,
-            text=f"Let's go! I will now check {restaurant_names[0]['name']} every {self.tick_frequency} seconds."
-        )
+        message = text=f"Let's go! I will now check {restaurant['name']} every {self.tick_frequency} seconds.\n"
+        message += f"In the meantime, checkout the menu at {restaurant['url']}"
 
-        logging.debug(f'Added {slug} to watchlist')
+        context.bot.send_message(message_chat_id, message)
+
         watch = RestaurantWatch(message_chat_id, slug)
         self.watchlist.add(watch)
 
@@ -97,30 +98,35 @@ class Bot:
         logging.info(f'Chat id: {update.message.chat_id}')
         text = update.message.text
         if not text.startswith('https://wolt.com/'):
-            context.bot.send_message(chat_id=update.message.chat_id, text='Please send a link to a restaurant!')
-            return
-
-        slug = text.split('/')[-1]
-        logging.info(f'Got slug: {slug}')
-        restaurant_names = find_restaurant(slug)
+            restaurant_names = find_restaurant(text, self.restaurant_filters, False)
+        else:
+            slug = text.split('/')[-1]
+            logging.info(f'Got slug: {slug}')
+            restaurant_names = find_restaurant(slug, self.restaurant_filters, True)
 
         if len(restaurant_names) == 0:
             context.bot.send_message(
-                chat_id=message_chat_id,
+                chat_id=update.message.chat_id,
                 text=f"No such restaurant found :("
             )
             return
 
         if len(restaurant_names) != 1:
-            return self.handle_multiple_restaurants(update, restaurant_names)
+            return self.handle_multiple_restaurants(update, restaurant_names, 'address')
 
-        context.bot.send_message(
-            chat_id=update.message.chat_id,
-            text=f"Let's go! I will now check {restaurant_names[0]['name']} every {self.tick_frequency} seconds."
-        )
+        restaurant = restaurant_names[0]
 
-        logging.debug(f'Added {slug} to watchlist')
-        watch = RestaurantWatch(update.message.chat_id, slug)
+        if restaurant['online']:
+            message = f"✅ {restaurant['name']} is online! Get your food from {restaurant['url']}"
+            context.bot.send_message(chat_id=update.message.chat_id, text=message)
+            return
+
+        message = text=f"Let's go! I will now check {restaurant['name']} every {self.tick_frequency} seconds.\n"
+        message += f"In the meantime, checkout the menu at {restaurant['url']}"
+
+        context.bot.send_message(chat_id=update.message.chat_id, text=message)
+
+        watch = RestaurantWatch(update.message.chat_id, restaurant['slug'])
         self.watchlist.add(watch)
 
     def unmute(self, update, context):
@@ -168,6 +174,7 @@ class Bot:
         self.bot_password = config.password
         self.runs_before_giving_up = config.runs_before_giving_up
         self.tick_frequency = config.tick_frequency
+        self.restaurant_filters = config.filters
         self.watchlist = RestaurantWatchlist()
 
         updater = Updater(config.token)
