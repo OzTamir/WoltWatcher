@@ -9,12 +9,12 @@ from configuration import Configuration
 from telegram_bot import Bot
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='[WoltWatcher][%(levelname)s][%(filename)s:%(funcName)s]: %(message)s')
+    level=logging.WARNING,
+    format='[WoltWatcher]: %(message)s')
 CONFIG_FILE = 'config.json'
 
 def main():
-    logging.info('Starting...')
+    logging.warning('Starting...')
     # Setup the configuration
     config = Configuration(CONFIG_FILE)
 

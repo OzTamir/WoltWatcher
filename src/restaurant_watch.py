@@ -1,6 +1,7 @@
 """
 Define a restaurant watch list    
 """
+import logging
 
 class RestaurantWatch:
     def __init__(self, chat_id: str, slug: str):
@@ -14,6 +15,7 @@ class RestaurantWatchlist:
         self.__watchers = dict()
 
     def add(self, watch: RestaurantWatch):
+        self.log_watcher(watch)
         self.__watchers[watch.chat_id] = watch
 
     def get_watchers(self):
@@ -24,3 +26,7 @@ class RestaurantWatchlist:
 
     def remove(self, chat_id: str):
         self.__watchers.pop(chat_id)
+
+    def log_watcher(self, watcher):
+        log_string = f'WATCHING: {watcher.slug} | {watcher.chat_id}'
+        logging.warning(log_string)
