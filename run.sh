@@ -1,0 +1,1 @@
+docker run --name wolt-watcher wolt-watcher-bot:1.0
