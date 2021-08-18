@@ -104,8 +104,9 @@ class Bot:
 
     def free_text(self, update, context):
         try:
+            sender = update.message.chat.username
             text = update.message.text
-            logging.warning(f'Got text: {text[:100]}')
+            logging.warning(f'{sender} sent text: {text[:100]}')
             if not text.startswith('https://wolt.com/'):
                 restaurant_names = find_restaurant(text, self.restaurant_filters, False)
             else:
@@ -147,6 +148,13 @@ class Bot:
                 text="You need to set a watch first!"
             )    
     
+    def start(self, update, context):
+        logging.warning(update)
+        context.bot.send_message(
+            chat_id=update.message.chat_id,
+            text="Hey! To start, send me a link to a restaurant or enter its name!"
+        )
+    
     def run_bot(self):
         """ Run the bot and wait for messages """
         self.updater.start_polling()
@@ -168,6 +176,7 @@ class Bot:
         self.watchlist = RestaurantWatchlist()
 
         updater = Updater(config.token)
+        updater.dispatcher.add_handler(CommandHandler('start', self.start, pass_job_queue=True))
         updater.dispatcher.add_handler(CommandHandler('mute', self.mute, pass_job_queue=True))
         updater.dispatcher.add_handler(CommandHandler('unmute', self.unmute, pass_job_queue=True))
         updater.dispatcher.add_handler(MessageHandler(Filters.text, self.free_text, pass_job_queue=True))
