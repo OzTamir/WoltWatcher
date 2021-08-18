@@ -149,7 +149,6 @@ class Bot:
             )    
     
     def start(self, update, context):
-        logging.warning(update)
         context.bot.send_message(
             chat_id=update.message.chat_id,
             text="Hey! To start, send me a link to a restaurant or enter its name!"
