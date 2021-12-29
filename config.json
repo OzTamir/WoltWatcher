@@ -6,6 +6,6 @@
         "runs_before_giving_up": 15
     },
     "filters": {
-        "country" : ["ISR"]
+        "currency" : ["ILS"]
     }
 }

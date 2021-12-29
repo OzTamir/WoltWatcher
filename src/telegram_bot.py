@@ -114,7 +114,8 @@ class Bot:
                 restaurant_names = find_restaurant(slug, self.restaurant_filters, True)
 
             self.handle_find_restaurants_results(update, context, update.message.chat_id, restaurant_names)
-        except:
+        except Exception as e:
+            logging.error(f'[free_text] Error: {e}')
             context.bot.send_message(
                 chat_id=update.message.chat_id,
                 text=f"No such restaurant found :("
